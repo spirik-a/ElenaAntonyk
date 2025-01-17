@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Severe Acute Kidney Injury Risk Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Severe AKI Risk Calculator</h1>
+    <form id="akiForm">
+        <label for="x1">Respiratory Insufficiency (1, 2, or 3):</label>
+        <input type="number" id="x1" name="x1" min="1" max="3" required>
+        
+        <label for="x2">C-Reactive Protein (mg/L):</label>
+        <input type="number" id="x2" name="x2" step="0.1" required>
+        
+        <button type="submit">Calculate Risk</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        // JavaScript Code
+        function predictSevereAKI(X1, X2) {
+            const intercept = -8.190447;
+            const coefficientX1 = 0.862989;
+            const coefficientX2 = 0.010454;
+
+            const linearSum = intercept + (coefficientX1 * X1) + (coefficientX2 * X2);
+            const probability = 1 / (1 + Math.exp(-linearSum));
+            return probability;
+        }
+
+        function classifyAKIRisk(X1, X2) {
+            const threshold = 0.322;
+            const riskProbability = predictSevereAKI(X1, X2);
+            const classification = riskProbability >= threshold ? "High Risk" : "Low Risk";
+            return { probability: riskProbability, classification };
+        }
+
+        // Handle form submission
+        document.getElementById("akiForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the form from refreshing the page
+
+            const X1 = parseFloat(document.getElementById("x1").value);
+            const X2 = parseFloat(document.getElementById("x2").value);
+
+            if (isNaN(X1) || isNaN(X2)) {
+                alert("Please enter valid numeric values.");
+                return;
+            }
+
+            const result = classifyAKIRisk(X1, X2);
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                <p>Probability of Severe AKI: ${(result.probability * 100).toFixed(2)}%</p>
+                <p>Classification: ${result.classification}</p>
+            `;
+        });
+    </script>
+</body>
+</html>
