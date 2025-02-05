@@ -1,95 +1,149 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Severe Acute Kidney Injury Risk Calculator</title>
+    <title>AKI Risk Calculators</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .calculator {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-top: 0;
         }
         label {
+            font-weight: bold;
             display: block;
-            margin-bottom: 5px;
+            margin: 10px 0 5px;
         }
         input {
-            margin-bottom: 10px;
-            padding: 5px;
             width: 100%;
-            max-width: 300px;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
+            background: #28a745;
             color: white;
+            padding: 10px 15px;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
+            background: #218838;
         }
-        #result {
-            margin-top: 20px;
+        .result {
+            font-size: 1.2em;
             font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Severe AKI Risk Calculator</h1>
-       
-    <form id="akiForm">
-        <label for="x1">Respiratory Insufficiency (1, 2, or 3):</label>
-        <input type="number" id="x1" name="x1" min="1" max="3" required>
-        
-        <label for="x2">C-Reactive Protein (mg/L):</label>
-        <input type="number" id="x2" name="x2" step="0.1" required>
-        
-        <button type="submit">Calculate Risk</button>
-    </form>
-    
-    <div id="result"></div>
+
+    <h1>Acute Kidney Injury (AKI) Risk Calculators</h1>
+
+    <!-- Calculator 1: Lymphocytes & Padua Prediction Score -->
+    <div class="calculator">
+        <h2>Calculator 1: Lymphocytes & Padua Prediction Score</h2>
+        <label for="lymphocytes">Lymphocytes (absolute count, 10⁹/L):</label>
+        <input type="number" id="lymphocytes" step="0.01">
+
+        <label for="padua1">Padua Prediction Score:</label>
+        <input type="number" id="padua1">
+
+        <button onclick="calculateLymphocytesPadua()">Calculate</button>
+        <div class="result" id="result1"></div>
+    </div>
+
+    <!-- Calculator 2: CRP & Respiratory Insufficiency -->
+    <div class="calculator">
+        <h2>Calculator 2: CRP & Respiratory Insufficiency</h2>
+        <label for="crp1">CRP (mg/L):</label>
+        <input type="number" id="crp1" step="0.1">
+
+        <label for="respiratory">Respiratory Insufficiency (0-3):</label>
+        <input type="number" id="respiratory" min="0" max="3">
+
+        <button onclick="calculateCRPRespInsufficiency()">Calculate</button>
+        <div class="result" id="result2"></div>
+    </div>
+
+    <!-- Calculator 3: CRP & Padua Prediction Score -->
+    <div class="calculator">
+        <h2>Calculator 3: CRP & Padua Prediction Score</h2>
+        <label for="crp2">CRP (mg/L):</label>
+        <input type="number" id="crp2" step="0.1">
+
+        <label for="padua2">Padua Prediction Score:</label>
+        <input type="number" id="padua2">
+
+        <button onclick="calculateCRPPadua()">Calculate</button>
+        <div class="result" id="result3"></div>
+    </div>
 
     <script>
-        // JavaScript Code
-        function predictSevereAKI(X1, X2) {
-            const intercept = -8.190447;
-            const coefficientX1 = 0.862989;
-            const coefficientX2 = 0.010454;
-
-            const linearSum = intercept + (coefficientX1 * X1) + (coefficientX2 * X2);
-            const probability = 1 / (1 + Math.exp(-linearSum));
-            return probability;
+        function logisticFunction(logit) {
+            return 1 / (1 + Math.exp(-logit));
         }
 
-        function classifyAKIRisk(X1, X2) {
-            const threshold = 0.322;
-            const riskProbability = predictSevereAKI(X1, X2);
-            const classification = riskProbability >= threshold ? "High Risk" : "Low Risk";
-            return { probability: riskProbability, classification };
-        }
-
-        // Handle form submission
-        document.getElementById("akiForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent the form from refreshing the page
-
-            const X1 = parseFloat(document.getElementById("x1").value);
-            const X2 = parseFloat(document.getElementById("x2").value);
-
-            if (isNaN(X1) || isNaN(X2)) {
-                alert("Please enter valid numeric values.");
+        function calculateLymphocytesPadua() {
+            let lymphocytes = parseFloat(document.getElementById("lymphocytes").value);
+            let padua = parseFloat(document.getElementById("padua1").value);
+            
+            if (isNaN(lymphocytes) || isNaN(padua)) {
+                document.getElementById("result1").textContent = "Please enter valid inputs.";
                 return;
             }
 
-            const result = classifyAKIRisk(X1, X2);
-            const resultDiv = document.getElementById("result");
-            resultDiv.innerHTML = `
-                <p>Probability of Severe AKI: ${(result.probability * 100).toFixed(2)}%</p>
-                <p>Classification: ${result.classification}</p>
-            `;
-        });
+            let logit = -2.561 + (-4.1922 * lymphocytes) + (0.7298 * padua);
+            let probability = logisticFunction(logit);
+            document.getElementById("result1").textContent = 
+                probability > 0.167 ? "High risk of AKI" : "Low risk of AKI";
+        }
+
+        function calculateCRPRespInsufficiency() {
+            let crp = parseFloat(document.getElementById("crp1").value);
+            let respiratory = parseInt(document.getElementById("respiratory").value);
+            
+            if (isNaN(crp) || isNaN(respiratory) || respiratory < 0 || respiratory > 3) {
+                document.getElementById("result2").textContent = "Please enter valid inputs.";
+                return;
+            }
+
+            let logit = -8.190447 + (0.010454 * crp) + (2.227176 * respiratory);
+            let probability = logisticFunction(logit);
+            document.getElementById("result2").textContent = 
+                probability > 0.322 ? "High risk of AKI" : "Low risk of AKI";
+        }
+
+        function calculateCRPPadua() {
+            let crp = parseFloat(document.getElementById("crp2").value);
+            let padua = parseFloat(document.getElementById("padua2").value);
+            
+            if (isNaN(crp) || isNaN(padua)) {
+                document.getElementById("result3").textContent = "Please enter valid inputs.";
+                return;
+            }
+
+            let logit = -6.011678 + (0.013576 * crp) + (0.862989 * padua);
+            let probability = logisticFunction(logit);
+            document.getElementById("result3").textContent = 
+                probability > 0.177 ? "High risk of AKI" : "Low risk of AKI";
+        }
     </script>
- 
+
 </body>
 </html>
